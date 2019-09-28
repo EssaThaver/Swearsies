@@ -1,35 +1,38 @@
+import { SwearRecogniser } from './SwearRecogniser.js'; // or './module'
+
 window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
 
-const recognition = new SpeechRecognition();
+let finalTranscript = '';
 
-const icon = document.querySelector("i.fa.fa-microphone");
-let paragraph = document.createElement("p");
-let container = document.querySelector(".text-box");
+let swearRecog = new SwearRecogniser();
 
-container.appendChild(paragraph);
+let recognition = new window.SpeechRecognition();
 
-const sound = document.querySelector(".sound");
+recognition.interimResults = true;
+recognition.maxAlternatives = 10;
+recognition.continuous = true;
+recognition.onresult = (event) => {
+  let interimTranscript = '';
+  for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
+    
+    let transcript = event.results[i][0].transcript;
+    
+    if (event.results[i].isFinal) {
+      swearRecog.checkForSwears(transcript)
+      finalTranscript += transcript;
 
-icon.addEventListener("click", () => {
-  sound.play();
-  dictate();
-});
+    } else {
+      interimTranscript += transcript;
+    }
+  }
+  document.querySelector('body').innerHTML = finalTranscript + '<i style="color:#ddd;">' + interimTranscript + '</>';
+}
 
 
-const dictate = () => {
-  recognition.start();
-  recognition.onresult = event => {
-    const speechToText = event.results[0][0].transcript;
-    paragraph.textContent = speechToText;
-  };
-};
 
-const synth = window.speechSynthesis;
+recognition.start(); //Start the recogniser
 
-const speak = action => {
-  utterThis = new SpeechSynthesisUtterance(action());
-  synth.speak(utterThis);
-};
+
 
 
 
